@@ -2,6 +2,7 @@ import React, { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import axios from "axios";
 
+// (Keeping your existing MIME filter for now; we'll enhance in SMS-11)
 const allowedTypes = ["application/xml", "text/csv", "application/json"];
 
 export default function FileUpload() {
@@ -26,13 +27,16 @@ export default function FileUpload() {
     if (!files.length) return;
 
     setUploading(true);
-    const formData = new FormData();
-    files.forEach(file => formData.append("files", file));
-
     try {
-      const response = await axios.post("/api/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      // ✅ Send each file individually as "file" to /api/FileUpload/upload
+      for (const f of files) {
+        const formData = new FormData();
+        formData.append("file", f); // must be singular to match IFormFile file
+
+        await axios.post("/api/FileUpload/upload", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      }
 
       setMessage(`✅ Uploaded ${files.length} file(s) successfully.`);
       setFiles([]);
